@@ -12,7 +12,6 @@
     "run_worker_first": ["/api/*"]
   },
   "kv_namespaces": [
-    // Reemplazá el texto de "id" por el ID del KV que creaste en el panel de Cloudflare (ver LEEME-CLOUDFLARE.md).
-    { "binding": "DECANTS", "id": "PEGAR_ID_DEL_KV_AQUI" }
+    { "binding": "DECANTS", "id": "75b607fe52774271bf9b84d291edf82d" }
   ]
 }
