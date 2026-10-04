@@ -38,3 +38,21 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
   aspect-ratio:286 / 432;           /* mantiene las proporciones del logo */
   color:inherit;                    /* toma el color del texto de la marca */
 }
+
+
+
+.brand {
+  display: inline-flex;
+  align-items: center;      /* centra el texto en altura respecto al frasco */
+  gap: .75rem;
+}
+.brand span[data-setting="siteName"] {
+  font-size: clamp(1.1rem, 2.4vw, 1.4rem);  /* más grande, y se adapta en celular */
+  line-height: 1;                            /* sin espacio extra arriba/abajo */
+  white-space: nowrap;
+}
+
+@media(max-width:380px){
+  .brand span[data-setting="siteName"]{font-size:1rem;letter-spacing:.04em}
+  .brand{gap:.5rem}
+}
