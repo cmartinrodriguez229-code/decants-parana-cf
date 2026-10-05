@@ -1,4 +1,4 @@
-# DECANTS PARANA v6 · Cloudflare
+# DECANTS PARANA v6.1 · Cloudflare
 
 Sitio estático + un Worker que atiende `/api/*` (catálogo, login, guardado, fotos).
 Datos y fotos subidas desde el panel viven en un KV. Las 139 fotos actuales ya vienen
@@ -34,3 +34,13 @@ Alternativa por consola: `npm install`, `npx wrangler kv namespace create DECANT
 ## Nota
 
 `seed-products.json` y `seed-settings.json` solo se usan si el KV está vacío. Después manda lo que guardes en el panel.
+
+## Novedades v6.1: favoritos (♥) y cuentas de clientes
+
+- Cada perfume tiene un corazón en el listado y en la ficha. Junto al carrito hay un botón **Favoritos** que despliega la lista (orden A→Z, con miniatura y enlace a la ficha).
+- Sin haber completado "Mis datos", los favoritos se guardan en el dispositivo. Al completar y guardar **Mis datos** se crea la cuenta del cliente en el KV y los favoritos quedan vinculados a ella (se sincronizan entre dispositivos).
+- La cuenta se identifica por el **teléfono** (no hay contraseña). Si alguien carga un teléfono que ya existe desde otro dispositivo, recupera los favoritos, pero **no** se pisan ni se muestran los datos guardados.
+- "Mis datos" tiene un campo **Email (opcional)**.
+- Nuevos endpoints públicos: `POST /api/customer` y `GET/POST /api/favorites` (usan un token firmado que se guarda en el navegador). Requieren que exista el secreto `ADMIN_SESSION_SECRET` (o `ADMIN_PASSWORD`).
+- En el KV se guardan como `cust:<id>` (datos y favoritos) y `custphone:<teléfono>` (índice). Se pueden ver desde Cloudflare → KV → *View*.
+- Enlace directo a una ficha: `https://tu-sitio/#ficha/<id-del-perfume>`.
