@@ -7,6 +7,11 @@ const CUSTOMER_KEY = "decants_parana_customer_v2";
 
 let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
 let customer = JSON.parse(localStorage.getItem(CUSTOMER_KEY) || "null");
+const FAV_KEY = "decants_parana_favs_v1";
+const TOKEN_KEY = "decants_parana_ctoken_v1";
+function readLS(key, fallback){try{const v=JSON.parse(localStorage.getItem(key));return v??fallback}catch{return fallback}}
+let favs = readLS(FAV_KEY, []); if(!Array.isArray(favs)) favs = [];
+let customerToken = localStorage.getItem(TOKEN_KEY) || "";
 let activeBrand = "all";
 const PAGE_SIZE = 8;
 let currentPage = 1;
@@ -37,6 +42,96 @@ function saveCart(){localStorage.setItem(CART_KEY, JSON.stringify(cart));}
 function totalQty(){return cart.reduce((a,i)=>a+i.qty,0);}
 function totalPrice(){return cart.reduce((a,i)=>a+i.price*i.qty,0);}
 
+// ---------- favoritos ----------
+const HEART_SVG='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+const isFav=(id)=>favs.includes(id);
+function favLabels(on){return on?{aria:"Quitar de favoritos",text:"En mis favoritos"}:{aria:"Agregar a favoritos",text:"Agregar a favoritos"}}
+function favButton(id,cls="",withLabel=false){
+  const on=isFav(id), l=favLabels(on);
+  return `<button type="button" class="fav-btn ${cls} ${on?"active":""}" data-fav="${escapeHtml(id)}" aria-pressed="${on}" aria-label="${l.aria}" title="${l.aria}">${HEART_SVG}${withLabel?`<span class="fav-label">${l.text}</span>`:""}</button>`;
+}
+function saveFavs(){localStorage.setItem(FAV_KEY, JSON.stringify(favs));}
+function favItems(){
+  return favs.map(findProduct).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,"es",{sensitivity:"base"}));
+}
+function renderFavPanel(){
+  const items=favItems();
+  $("#favItems").innerHTML = items.length
+    ? `<ul class="fav-list">${items.map(p=>{
+        const id=escapeHtml(pkey(p));
+        return `<li class="fav-item">
+          <a class="fav-link" href="#ficha/${encodeURIComponent(pkey(p))}" data-detail="${id}">
+            <img class="fav-thumb" src="${escapeHtml(productImage(p))}" data-fb="${escapeHtml(imageFallback(p))}" alt="" loading="lazy" onerror="${imgOnError("this.style.visibility='hidden'")}">
+            <span class="fav-name"><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.brand)}</small></span>
+          </a>
+          <button type="button" class="fav-remove" data-fav="${id}" aria-label="Quitar ${escapeHtml(p.name)} de favoritos" title="Quitar de favoritos">×</button>
+        </li>`}).join("")}</ul>`
+    : `<p class="fav-empty">Todavía no tenés favoritos. Tocá el ♥ en cualquier perfume para guardarlo acá.</p>`;
+  $("#favNote").innerHTML = customerToken
+    ? "Tus favoritos están guardados en tu cuenta."
+    : `Para guardarlos en tu cuenta, completá <a href="#registro" data-close="favs">tus datos</a>.`;
+}
+function updateFavUI(){
+  $("#favCount").textContent=favItems().length;
+  document.querySelectorAll(".fav-btn").forEach(b=>{
+    const on=isFav(b.dataset.fav), l=favLabels(on);
+    b.classList.toggle("active",on);
+    b.setAttribute("aria-pressed",on);
+    b.setAttribute("aria-label",l.aria);
+    b.title=l.aria;
+    const t=b.querySelector(".fav-label"); if(t) t.textContent=l.text;
+  });
+  renderFavPanel();
+}
+function openFavPanel(){const p=$("#favPanel");p.classList.add("open");p.setAttribute("aria-hidden","false");$("#favBtn").setAttribute("aria-expanded","true");renderFavPanel();}
+function closeFavPanel(){const p=$("#favPanel");p.classList.remove("open");p.setAttribute("aria-hidden","true");$("#favBtn").setAttribute("aria-expanded","false");}
+function toggleFav(id){
+  const p=findProduct(id);
+  const adding=!isFav(id);
+  favs=adding?[...favs,id]:favs.filter(x=>x!==id);
+  saveFavs(); updateFavUI();
+  const name=p?p.name:"Perfume";
+  showToast(adding?`♥ ${name} agregado a favoritos${customerToken?"":" · completá tus datos para guardarlos en tu cuenta"}`:`${name} quitado de favoritos`);
+  if(customerToken) favRemote(adding?"add":"remove",id);
+}
+function unlinkAccount(){customerToken="";localStorage.removeItem(TOKEN_KEY);}
+const authHeaders=()=>({"content-type":"application/json",...(customerToken?{"x-customer-token":customerToken}:{})});
+async function favRemote(action,id){
+  try{
+    const r=await fetch("/api/favorites",{method:"POST",headers:authHeaders(),body:JSON.stringify({action,id})});
+    if(r.status===401){unlinkAccount();updateFavUI();return}
+    if(!r.ok)throw new Error("sync");
+  }catch{showToast("No se pudo sincronizar tus favoritos con tu cuenta")}
+}
+async function syncFavsFromServer(){
+  if(!customerToken)return;
+  try{
+    const r=await fetch("/api/favorites",{headers:authHeaders(),cache:"no-store"});
+    if(r.status===401){unlinkAccount();updateFavUI();return}
+    if(!r.ok)return;
+    const d=await r.json();
+    if(Array.isArray(d.favorites)){favs=d.favorites;saveFavs();updateFavUI();}
+  }catch{/* sin conexión: quedan los favoritos locales */}
+}
+// Crea o actualiza la cuenta del cliente y le vincula los favoritos
+async function linkAccount(c){
+  try{
+    const r=await fetch("/api/customer",{method:"POST",headers:authHeaders(),body:JSON.stringify({...c,favorites:favs})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)return {ok:false,error:d.error||"No se pudo vincular tu cuenta."};
+    customerToken=d.token;localStorage.setItem(TOKEN_KEY,d.token);
+    if(Array.isArray(d.favorites)){favs=d.favorites;saveFavs();}
+    updateFavUI();
+    return {ok:true,existing:!!d.existing};
+  }catch{return {ok:false,error:"Sin conexión con el servidor."}}
+}
+function openFromHash(){
+  const m=location.hash.match(/^#ficha\/(.+)$/);
+  if(!m)return;
+  let id=m[1]; try{id=decodeURIComponent(id)}catch{}
+  if(findProduct(id))showProduct(id);
+}
+
 function productCard(p){
   const desc = p.description || "Ficha olfativa pendiente de verificación en la fuente del proveedor.";
   const _id=escapeHtml(pkey(p));
@@ -45,6 +140,7 @@ function productCard(p){
       <img src="${escapeHtml(productImage(p))}" data-fb="${escapeHtml(imageFallback(p))}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="${imgOnError("this.style.display='none';this.nextElementSibling.style.display='block'")}">
       <span class="image-fallback" style="display:none">${escapeHtml(initials(p.name))}</span>
       <span class="brand-badge">${escapeHtml(p.brand)}</span>
+      ${favButton(pkey(p),"card-fav")}
     </div>
     <div class="product-body">
       <h3 class="is-link" data-detail="${_id}" role="button" tabindex="0">${escapeHtml(p.name)}</h3>
@@ -158,14 +254,14 @@ function showProduct(slug){
   const desc=p.description || "Ficha olfativa pendiente de verificación en la fuente del proveedor.";
   $("#modalBody").innerHTML=`<div class="modal-product-grid">
     <div class="modal-product-image"><img src="${escapeHtml(productImage(p))}" data-fb="${escapeHtml(imageFallback(p))}" alt="${escapeHtml(p.name)}" onerror="${imgOnError("this.style.display='none'")}"></div>
-    <div><p class="eyebrow">${escapeHtml(p.brand)}</p><h2 id="modalTitle">${escapeHtml(p.name)}</h2><p class="description">${escapeHtml(desc)}</p>
+    <div><p class="eyebrow">${escapeHtml(p.brand)}</p><h2 id="modalTitle">${escapeHtml(p.name)}</h2>${favButton(pkey(p),"modal-fav",true)}<p class="description">${escapeHtml(desc)}</p>
       <div class="modal-sizes">${p.enabled5 !== false ? `<button class="btn btn-dark" data-add="${escapeHtml(pkey(p))}" data-size="5">5 ml · ${money(p.price5 ?? PRICES[5])}</button>` : ""}${p.enabled10 !== false ? `<button class="btn btn-dark" data-add="${escapeHtml(pkey(p))}" data-size="10">10 ml · ${money(p.price10 ?? PRICES[10])}</button>` : ""}</div>
       </div></div>`;
   openModal("#productModal");
 }
 function fillCustomerForm(){
   if(!customer)return;
-  ["nombre","apellido","domicilio","localidad","telefono"].forEach(k=>{const el=$(`#customerForm [name="${k}"]`);if(el)el.value=customer[k]||""});
+  ["nombre","apellido","domicilio","localidad","telefono","email"].forEach(k=>{const el=$(`#customerForm [name="${k}"]`);if(el)el.value=customer[k]||""});
 }
 function fillCheckout(){
   const fields={coNombre:"nombre",coApellido:"apellido",coDomicilio:"domicilio",coLocalidad:"localidad",coTelefono:"telefono"};
@@ -190,31 +286,51 @@ function buildWhatsApp(){
 function showToast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.appendChild(t)}t.textContent=msg;t.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove("show"),2200)}
 
 document.addEventListener("click",e=>{
+  if(!e.target.closest("#favPanel,#favBtn"))closeFavPanel();
   const add=e.target.closest("[data-add]");if(add){addToCart(add.dataset.add,Number(add.dataset.size));return}
-  const detail=e.target.closest("[data-detail]");if(detail){showProduct(detail.dataset.detail);return}
+  const fav=e.target.closest("[data-fav]");if(fav){e.preventDefault();toggleFav(fav.dataset.fav);return}
+  const detail=e.target.closest("[data-detail]");if(detail){e.preventDefault();closeFavPanel();showProduct(detail.dataset.detail);return}
   const pg=e.target.closest("[data-page]");if(pg){if(!pg.disabled)goToPage(Number(pg.dataset.page));return}
   const brand=e.target.closest("[data-brand]");if(brand){activeBrand=brand.dataset.brand;currentPage=1;$("#brandFilter").value=activeBrand;renderCatalog();return}
   const qty=e.target.closest("[data-qty]");if(qty){updateQty(qty.dataset.qty,Number(qty.dataset.delta));return}
   const rem=e.target.closest("[data-remove]");if(rem){removeItem(rem.dataset.remove);return}
-  const close=e.target.closest("[data-close]");if(close){if(close.dataset.close==="cart")closeDrawer();if(close.dataset.close==="modal")closeModal("#productModal");if(close.dataset.close==="checkout")closeModal("#checkoutModal");return}
+  const close=e.target.closest("[data-close]");if(close){if(close.dataset.close==="favs")closeFavPanel();if(close.dataset.close==="cart")closeDrawer();if(close.dataset.close==="modal")closeModal("#productModal");if(close.dataset.close==="checkout")closeModal("#checkoutModal");return}
 });
 $("#searchInput").addEventListener("input",()=>{currentPage=1;renderCatalog()});
 $("#sortSelect").addEventListener("change",()=>{currentPage=1;renderCatalog()});
 $("#brandFilter").addEventListener("change",e=>{activeBrand=e.target.value;currentPage=1;renderCatalog()});
-$("#cartBtn").addEventListener("click",openDrawer);
+$("#cartBtn").addEventListener("click",()=>{closeFavPanel();openDrawer()});
+$("#favBtn").addEventListener("click",()=>{$("#favPanel").classList.contains("open")?closeFavPanel():openFavPanel()});
 $("#heroCartBtn").addEventListener("click",openDrawer);
 $("#checkoutBtn").addEventListener("click",openCheckout);
 $("#clearCartBtn").addEventListener("click",()=>{cart=[];saveCart();updateCartUI();showToast("Carrito vaciado")});
-$("#customerForm").addEventListener("submit",e=>{e.preventDefault();const fd=new FormData(e.currentTarget);customer=Object.fromEntries(fd.entries());localStorage.setItem(CUSTOMER_KEY,JSON.stringify(customer));$("#saveMessage").textContent="Datos guardados en este dispositivo.";showToast("Datos guardados")});
+$("#customerForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const form=e.currentTarget, msg=$("#saveMessage"), btn=form.querySelector("[type=submit]");
+  customer=Object.fromEntries(new FormData(form).entries());
+  localStorage.setItem(CUSTOMER_KEY,JSON.stringify(customer));
+  btn.disabled=true; msg.textContent="Guardando…";
+  const res=await linkAccount(customer);
+  btn.disabled=false;
+  if(res.ok){
+    msg.textContent=res.existing
+      ? "Encontramos tu cuenta con ese teléfono: recuperamos tus favoritos."
+      : "Datos guardados. Tus favoritos quedaron vinculados a tu cuenta.";
+    showToast("Datos guardados");
+  }else{
+    msg.textContent=`Datos guardados en este dispositivo, pero no se vincularon a tu cuenta: ${res.error}`;
+  }
+});
 $("#checkoutForm").addEventListener("submit",e=>{
   e.preventDefault();
-  customer={nombre:$("#coNombre").value.trim(),apellido:$("#coApellido").value.trim(),domicilio:$("#coDomicilio").value.trim(),localidad:$("#coLocalidad").value.trim(),telefono:$("#coTelefono").value.trim()};
+  customer={...customer,nombre:$("#coNombre").value.trim(),apellido:$("#coApellido").value.trim(),domicilio:$("#coDomicilio").value.trim(),localidad:$("#coLocalidad").value.trim(),telefono:$("#coTelefono").value.trim()};
   localStorage.setItem(CUSTOMER_KEY,JSON.stringify(customer));
+  if(customerToken)linkAccount(customer);
   window.open(buildWhatsApp(),"_blank","noopener");
 });
 document.addEventListener("keydown",e=>{
   if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches(".is-link[data-detail]")){e.preventDefault();showProduct(e.target.dataset.detail);return}
-  if(e.key==="Escape"){closeDrawer();closeModal("#productModal");closeModal("#checkoutModal")}});
+  if(e.key==="Escape"){closeFavPanel();closeDrawer();closeModal("#productModal");closeModal("#checkoutModal")}});
 async function loadCatalog(){
   try{
     const r=await fetch("/api/catalog",{cache:"no-store"});
@@ -226,10 +342,11 @@ async function loadCatalog(){
     ALIAS=SITE_SETTINGS.alias||ALIAS;
     PRICES={5:Number(SITE_SETTINGS.price5)||12000,10:Number(SITE_SETTINGS.price10)||18000};
     applySiteSettings();
-    renderCatalog(); fillCustomerForm(); updateCartUI();
+    renderCatalog(); fillCustomerForm(); updateCartUI(); updateFavUI();
+    openFromHash(); syncFavsFromServer();
   }catch(err){
     // Fallback: the static seed remains usable if the backend is temporarily unavailable.
-    renderCatalog(); fillCustomerForm(); updateCartUI();
+    renderCatalog(); fillCustomerForm(); updateCartUI(); updateFavUI(); openFromHash();
     showToast("Catálogo local cargado. Backend no disponible.");
   }
 }
@@ -262,6 +379,7 @@ function applySiteSettings(){
   const alias=document.querySelector("[data-setting='alias']"); if(alias)alias.textContent=ALIAS;
   document.title=s.siteName||document.title;
 }
+window.addEventListener("hashchange",openFromHash);
 const backBtn=$("#backToTop");
 function toggleBackToTop(){backBtn.classList.toggle("show",window.scrollY>600)}
 window.addEventListener("scroll",toggleBackToTop,{passive:true});
