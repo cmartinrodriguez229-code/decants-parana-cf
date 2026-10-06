@@ -118,27 +118,37 @@
 
     <section id="catalogo" class="section">
       <div class="container">
+       
         <div class="section-head">
           <div>
             <p class="eyebrow" data-setting="catalogEyebrow">CATÁLOGO</p>
             <h2 data-setting="catalogTitle">Elegí tu fragancia</h2>
-            <p id="resultCount" class="muted"></p>
-          </div>
-          <div class="catalog-tools">
-            <label class="search">
-              <span>⌕</span>
-              <input id="searchInput" type="search" placeholder="Buscar perfume..." autocomplete="off">
-            </label>
-            <select id="brandFilter" aria-label="Filtrar por marca">
-              <option value="all">Todas las marcas</option>
-            </select>
-            <select id="sortSelect" aria-label="Ordenar">
-              <option value="az">A → Z</option>
-              <option value="za">Z → A</option>
-            </select>
           </div>
         </div>
-        <div id="brandChips" class="chips"></div>
+
+        <div class="catalog-sticky">
+          <div class="sticky-row">
+            <p id="resultCount" class="muted"></p>
+            <div class="catalog-tools">
+              <label class="search">
+                <span>⌕</span>
+                <input id="searchInput" type="search" placeholder="Buscar perfume..." autocomplete="off">
+              </label>
+              <select id="brandFilter" aria-label="Filtrar por marca">
+                <option value="all">Todas las marcas</option>
+              </select>
+              <select id="sortSelect" aria-label="Ordenar">
+                <option value="az">A → Z</option>
+                <option value="za">Z → A</option>
+              </select>
+            </div>
+          </div>
+          <div id="brandChips" class="chips"></div>
+        </div>
+
+
+
+        
         <div id="productGrid" class="product-grid"></div>
         <nav id="pagination" class="pagination" aria-label="Paginación del catálogo"></nav>
       </div>
