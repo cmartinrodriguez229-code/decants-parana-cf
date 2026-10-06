@@ -191,9 +191,9 @@ function renderPagination(pages){
   const box = $("#pagination");
   if (pages <= 1) { box.innerHTML = ""; return; }
   const btn = (label, page, extra = "", disabled = false) => `<button type="button" class="page-btn ${extra}" data-page="${page}" ${disabled ? "disabled" : ""} ${extra.includes("active") ? 'aria-current="page"' : ""}>${label}</button>`;
-  box.innerHTML = btn("← Anterior", currentPage - 1, "page-nav", currentPage === 1)
-    + pageNumbers(pages, currentPage).map(n => n === "…" ? `<span class="page-gap">…</span>` : btn(n, n, n === currentPage ? "active" : "")).join("")
-    + btn("Siguiente →", currentPage + 1, "page-nav", currentPage === pages);
+  box.innerHTML = btn('←<span class="page-lbl"> Anterior</span>', currentPage - 1, "page-nav", currentPage === 1)
+  + pageNumbers(pages, currentPage).map(n => n === "…" ? `<span class="page-gap">…</span>` : btn(n, n, n === currentPage ? "active" : "")).join("")
+  + btn('<span class="page-lbl">Siguiente </span>→', currentPage + 1, "page-nav", currentPage === pages);
 }
 function goToPage(n){
   currentPage = n;
