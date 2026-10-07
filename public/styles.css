@@ -144,3 +144,7 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
   .catalog-sticky .catalog-tools{margin-top:8px}
   .catalog-sticky .muted{font-size:12px}
 }
+
+.modal-card.modal-product {
+  padding-bottom: 32px;
+}
