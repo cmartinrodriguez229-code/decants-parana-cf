@@ -148,3 +148,6 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
 .modal-card.modal-product {
   padding-bottom: 32px;
 }
+#modalBody {
+  padding-bottom: 32px;
+}
