@@ -156,3 +156,10 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
   display: block;
   height: 32px;
 }
+
+@media (max-width: 680px) {
+  .modal-sizes { padding-bottom: 0; }
+  #modalBody { padding-bottom: 0; }
+  .modal-card::after { display: none; }
+  .modal-card.modal-product { padding-bottom: 22px; }
+}
