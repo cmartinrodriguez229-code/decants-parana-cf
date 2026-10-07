@@ -151,3 +151,8 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
 #modalBody {
   padding-bottom: 32px;
 }
+.modal-card::after {
+  content: "";
+  display: block;
+  height: 32px;
+}
