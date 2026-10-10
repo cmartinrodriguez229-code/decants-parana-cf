@@ -1,4 +1,4 @@
-let WA_NUMBER = "5493434161890";
+let WA_NUMBER = "5493435718032";
 let PRICES = {5: 12000, 10: 18000};
 let ALIAS = "rayo.doblar.rizo.mp";
 let SITE_SETTINGS = {};
@@ -132,6 +132,7 @@ function openFromHash(){
   if(findProduct(id))showProduct(id);
 }
 
+const VIAL_SVG='<svg class="vial" viewBox="0 0 40 72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="11" y="2" width="18" height="14" rx="3.5" fill="currentColor" stroke="none"/><rect x="7" y="17" width="26" height="8" rx="1.5" fill="currentColor" stroke="none"/><path d="M20 25v10"/><rect x="6.5" y="30" width="27" height="39" rx="5"/><path d="M13 42h14M13 48h14" stroke-width="2.4"/></svg>';
 function productCard(p){
   const desc = p.description || "Ficha olfativa pendiente de verificación en la fuente del proveedor.";
   const _id=escapeHtml(pkey(p));
@@ -147,10 +148,10 @@ function productCard(p){
       <p class="is-link product-desc" data-detail="${_id}" role="button" tabindex="0">${escapeHtml(desc)}</p>
       
       <div class="product-actions">
-        ${p.enabled5 !== false ? `<button class="size-btn" data-add="${escapeHtml(pkey(p))}" data-size="5">5 ml · ${money(p.price5 ?? PRICES[5])}</button>` : ""}
-        ${p.enabled10 !== false ? `<button class="size-btn" data-add="${escapeHtml(pkey(p))}" data-size="10">10 ml · ${money(p.price10 ?? PRICES[10])}</button>` : ""}
+        ${p.enabled5 !== false ? `<button class="size-btn" data-add="${escapeHtml(pkey(p))}" data-size="5" aria-label="Agregar 5 ml, ${money(p.price5 ?? PRICES[5])}">${VIAL_SVG}<span class="sz">5 ml</span><span class="pr">${money(p.price5 ?? PRICES[5])}</span></button>` : ""}
+        ${p.enabled10 !== false ? `<button class="size-btn" data-add="${escapeHtml(pkey(p))}" data-size="10" aria-label="Agregar 10 ml, ${money(p.price10 ?? PRICES[10])}">${VIAL_SVG}<span class="sz">10 ml</span><span class="pr">${money(p.price10 ?? PRICES[10])}</span></button>` : ""}
       </div>
-      <button class="chip" data-detail="${escapeHtml(pkey(p))}">Ver ficha</button>
+      <button type="button" class="detail-btn" data-detail="${escapeHtml(pkey(p))}">Ver ficha</button>
     </div>
   </article>`;
 }
@@ -374,7 +375,7 @@ function applySiteSettings(){
     "[data-setting='footerText']":s.footerText
   };
   Object.entries(map).forEach(([sel,val])=>document.querySelectorAll(sel).forEach(el=>{if(val!=null)el.textContent=val;}));
-  const wa=document.querySelector("[data-setting='whatsappLink']"); if(wa){wa.href=`https://wa.me/${WA_NUMBER}`;wa.textContent=`WhatsApp · +54 9 343 416-1890`;}
+  const wa=document.querySelector("[data-setting='whatsappLink']"); if(wa){wa.href=`https://wa.me/${WA_NUMBER}`;wa.textContent=`WhatsApp · +54 9 3435 71-8032`;}
   const email=document.querySelector("[data-setting='emailLink']"); if(email){email.href=`mailto:${s.email||""}`;email.textContent=s.email||"";}
   const alias=document.querySelector("[data-setting='alias']"); if(alias)alias.textContent=ALIAS;
   document.title=s.siteName||document.title;
