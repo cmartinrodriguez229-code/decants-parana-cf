@@ -256,7 +256,7 @@ function showProduct(slug){
   $("#modalBody").innerHTML=`<div class="modal-product-grid">
     <div class="modal-product-image"><img src="${escapeHtml(productImage(p))}" data-fb="${escapeHtml(imageFallback(p))}" alt="${escapeHtml(p.name)}" onerror="${imgOnError("this.style.display='none'")}"></div>
     <div><p class="eyebrow">${escapeHtml(p.brand)}</p><h2 id="modalTitle">${escapeHtml(p.name)}</h2>${favButton(pkey(p),"modal-fav",true)}<p class="description">${escapeHtml(desc)}</p>
-      <div class="modal-sizes">${p.enabled5 !== false ? `<button class="btn btn-dark" data-add="${escapeHtml(pkey(p))}" data-size="5">5 ml · ${money(p.price5 ?? PRICES[5])}</button>` : ""}${p.enabled10 !== false ? `<button class="btn btn-dark" data-add="${escapeHtml(pkey(p))}" data-size="10">10 ml · ${money(p.price10 ?? PRICES[10])}</button>` : ""}</div>
+      <div class="modal-sizes">${p.enabled5 !== false ? `<button class="size-btn" data-add="${escapeHtml(pkey(p))}" data-size="5" aria-label="Agregar 5 ml, ${money(p.price5 ?? PRICES[5])}">${VIAL_SVG}<span class="sz">5 ml</span><span class="pr">${money(p.price5 ?? PRICES[5])}</span></button>` : ""}${p.enabled10 !== false ? `<button class="size-btn" data-add="${escapeHtml(pkey(p))}" data-size="10" aria-label="Agregar 10 ml, ${money(p.price10 ?? PRICES[10])}">${VIAL_SVG}<span class="sz">10 ml</span><span class="pr">${money(p.price10 ?? PRICES[10])}</span></button>` : ""}</div>
       </div></div>`;
   openModal("#productModal");
 }
