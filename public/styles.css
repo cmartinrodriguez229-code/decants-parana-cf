@@ -168,8 +168,8 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
 .product-card{border-radius:26px;border:1px solid #e8e3dc;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.02)}
 .product-image{background:#fff;aspect-ratio:1/1;padding:10px}
 .product-image img{object-fit:contain}
-/* marca: texto simple arriba a la izquierda, sin píldora */
-.brand-badge{top:14px;left:16px;background:transparent;padding:0;border-radius:0;font-size:14px;font-weight:700;color:#14213d;letter-spacing:0}
+/* marca: píldora translúcida de bordes redondeados */
+.brand-badge{top:12px;left:12px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:7px 12px;border-radius:99px;font-size:12px;font-weight:700;color:#14213d;letter-spacing:0;box-shadow:0 1px 6px rgba(0,0,0,.08);max-width:calc(100% - 76px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* corazón: círculo blanco con sombra suave */
 .card-fav{top:12px;right:12px;width:44px;height:44px;box-shadow:0 4px 16px rgba(0,0,0,.12);background:#fff}
 .card-fav svg{width:22px;height:22px}
