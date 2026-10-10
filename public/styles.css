@@ -206,3 +206,7 @@ body{font-family:var(--font-family);color:var(--text);background:var(--site-bg);
 .modal-sizes .size-btn .sz{font-size:20px}
 .modal-sizes .size-btn .pr{font-size:15px}
 @media(max-width:480px){.modal-sizes{grid-template-columns:1fr}.modal-sizes .size-btn{--vh:38px;min-height:60px}}
+
+/* Los botones de tamaño se apilan solos cuando no entran lado a lado */
+.product-actions{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+.modal-sizes{grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
