@@ -132,7 +132,7 @@ function openFromHash(){
   if(findProduct(id))showProduct(id);
 }
 
-const VIAL_SVG='<svg class="vial" viewBox="0 0 40 72" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="11" y="2" width="18" height="14" rx="3.5" fill="currentColor" stroke="none"/><rect x="7" y="17" width="26" height="8" rx="1.5" fill="currentColor" stroke="none"/><path d="M20 25v10"/><rect x="6.5" y="30" width="27" height="39" rx="5"/><path d="M13 42h14M13 48h14" stroke-width="2.4"/></svg>';
+const VIAL_SVG='<svg class="vial" viewBox="0 0 85 224" aria-hidden="true" focusable="false"><rect x="9" y="1" width="68" height="46" rx="10" fill="currentColor"/><rect x="2" y="48" width="82" height="27" rx="4" fill="currentColor"/><rect x="39.8" y="74" width="5.6" height="132" fill="currentColor"/><rect x="5.3" y="84.3" width="74.4" height="135.4" rx="12" fill="#fff" stroke="currentColor" stroke-width="6.6"/><rect x="39.8" y="86" width="5.6" height="120" fill="currentColor"/><rect x="18.5" y="108" width="48" height="78" rx="6" fill="none" stroke="currentColor" stroke-width="5" stroke-dasharray="9 6"/></svg>';
 function productCard(p){
   const desc = p.description || "Ficha olfativa pendiente de verificación en la fuente del proveedor.";
   const _id=escapeHtml(pkey(p));
